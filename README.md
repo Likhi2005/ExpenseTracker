@@ -382,9 +382,7 @@ If you encounter any problems or have questions:
 3. **Documentation**: Refer to this README for setup instructions
 4. **Contact**: Reach out via GitHub
 
-## 🙏 Acknowledgments
-
-- Thanks to all contributors who helped build this project
+## Acknowledgments
 - Inspired by modern financial management applications
 - Built with love using open-source technologies
 - Special thanks to the React and Node.js communities
