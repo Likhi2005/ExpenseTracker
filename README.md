@@ -160,60 +160,6 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 ```
 
-## 🗄️ Database Schema
-
-### Setup PostgreSQL Database
-
-```sql
--- Create database
-CREATE DATABASE expense_tracker;
-
--- Connect to the database
-\c expense_tracker;
-
--- Create users table
-CREATE TABLE TBLUSER (
-    user_id SERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL UNIQUE,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create accounts table
-CREATE TABLE TBLACCOUNT (
-    account_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES TBLUSER(user_id) ON DELETE CASCADE,
-    account_name VARCHAR(100) NOT NULL,
-    account_type VARCHAR(50) NOT NULL, -- 'bank', 'cash', 'credit_card', 'savings'
-    balance DECIMAL(12,2) DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create transactions table
-CREATE TABLE TBLTRANSACTION (
-    transaction_id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES TBLUSER(user_id) ON DELETE CASCADE,
-    account_id INTEGER REFERENCES TBLACCOUNT(account_id) ON DELETE CASCADE,
-    amount DECIMAL(12,2) NOT NULL,
-    transaction_type VARCHAR(20) NOT NULL, -- 'income', 'expense'
-    category VARCHAR(100),
-    description TEXT,
-    transaction_date DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create indexes for better performance
-CREATE INDEX idx_user_accounts ON TBLACCOUNT(user_id);
-CREATE INDEX idx_user_transactions ON TBLTRANSACTION(user_id);
-CREATE INDEX idx_transaction_date ON TBLTRANSACTION(transaction_date);
-```
-
 ## 🎯 Running the Application
 
 ### Development Mode
