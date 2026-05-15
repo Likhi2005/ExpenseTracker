@@ -14,11 +14,11 @@ const NODE_ENV = config.nodeEnv || 'development';
 const server = app.listen(PORT, () => {
     logger.info(`
         ╔════════════════════════════════════════╗
-        ║   🚀 ExpenseTracker API Started       ║
+        ║   🚀 ExpenseTracker API Started        ║
         ╠════════════════════════════════════════╣
         ║   Environment: ${NODE_ENV.toUpperCase().padEnd(20)}    ║
-        ║   Port: ${PORT.toString().padEnd(30)}    ║
-        ║   Time: ${new Date().toLocaleTimeString().padEnd(25)}    ║
+        ║   Port: ${PORT.toString().padEnd(30)} ║
+        ║   Time: ${new Date().toLocaleTimeString().padEnd(25)}      ║
         ╚════════════════════════════════════════╝
         `);
 });
