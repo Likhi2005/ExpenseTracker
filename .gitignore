@@ -174,3 +174,6 @@ playwright/.cache/
 
 # Local development
 .local/
+
+# Shell scripts
+*.sh

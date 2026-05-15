@@ -7,6 +7,7 @@ import useStore from '../../store';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BiLoader } from 'react-icons/bi';
+import { setAuthToken } from '../../libs/apiCall';
 
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
@@ -46,17 +47,28 @@ const SignIn = () => {
 
   const onSubmit = async (data) => {
     try {
-      console.log(data);
       setLoading(true);
       const { data: res } = await api.post("/auth/sign-in", data);
-      if (res?.user) {
-        toast.success(res?.message);
 
-        const userInfo = {...res?.user,token:res.token};
-        localStorage.setItem("user",JSON.stringify(userInfo));
-        setCredentials(userInfo);
+      // ✅ FIX: Check res?.data?.user instead of res?.user
+      if (res?.data?.user && res?.data?.token) {
+        // ✅ FIX: Save token separately
+        localStorage.setItem('token', res.data.token);
+
+        // ✅ Save user to localStorage
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+
+        // ✅ FIX: Import and use setAuthToken to set token in axios headers
+        setAuthToken(res.data.token);
+
+        // ✅ Update store
+        setCredentials(res.data.user);
+
+        toast.success(res?.message || "Signed in successfully!");
+
+        // ✅ FIX: Redirect to dashboard "/"
         setTimeout(() => {
-          navigate("/overview");
+          navigate("/");
         }, 1500);
       }
     } catch (error) {

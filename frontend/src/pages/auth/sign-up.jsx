@@ -7,6 +7,7 @@ import useStore from '../../store';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BiLoader } from 'react-icons/bi';
+import { setAuthToken } from '../../libs/apiCall';
 
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
@@ -22,20 +23,21 @@ const RegisterSchema = z.object({
   email: z
     .string({ required_error: 'Email is required' })
     .email({ message: 'Invalid email address' }),
-  firstName: z
+  name: z
     .string({ required_error: 'Name  is required' })
-    .min(3, "Name is required"),
+    .min(3, "Name must be at least 3 characters"),
   password: z
     .string({ required_error: 'Password is required' })
     .min(8,"Password must be 8 characters"),
 });
 
 const SignUp = () => {
-  const { user } = useStore((state) => state);
+  const { user, setCredentials } = useStore((state) => state);
   const {
     register,
     handleSubmit,
     formState:{ errors},
+    reset,
   } = useForm({
     resolver: zodResolver(RegisterSchema),
   });
@@ -48,23 +50,39 @@ const SignUp = () => {
 
   const onSubmit = async (data) => {
     try {
-      console.log(data);
       setLoading(true);
       const { data: res } = await api.post("/auth/sign-up", data);
-      if(res?.user){
-        toast.success("Account created successfully. You can now login.");
-        setTimeout(()=>{
-          navigate("/sign-in");
-        },1500);
+
+      if (res?.data?.user && res?.data?.token) {
+        // ✅ Save token to localStorage
+        localStorage.setItem('token', res.data.token);
+
+        // ✅ Save user to localStorage  
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+
+        // ✅ Update Zustand store with the same data
+        setCredentials(res.data.user);
+
+        // ✅ Set token in API headers
+        setAuthToken(res.data.token);
+
+        // ✅ Reset form
+        reset();
+
+        toast.success("Account created successfully!");
+
+        // ✅ Redirect to dashboard
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
       }
     } catch (error) {
       console.log(error);
       toast.error(error?.response?.data?.message || error.message);
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className='flex items-center justify-center w-full min-h-screen py-10'>
       <Card className='w-[400px] bg-white dark:bg-black/20 shadow-md overflow-hidden'>
@@ -90,7 +108,7 @@ const SignUp = () => {
                   type="text"
                   placeholder="John Smith"
                   error={errors?.firstName?.message}
-                  {...register("firstName")}
+                  {...register("name")}
                   className="text-sm border dark:border-gray-800 dark:bg-transparent dark:placeholder:text-gray-700 dark:text-gray-400 dark:outline-none"
                 />
 
