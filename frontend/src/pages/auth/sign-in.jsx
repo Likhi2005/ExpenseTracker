@@ -3,12 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 
 
 import * as z from 'zod';
+
 import useStore from '../../store';
+import { setAuthToken } from '../../libs/apiCall';
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BiLoader } from 'react-icons/bi';
-import { setAuthToken } from '../../libs/apiCall';
-
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import SocialAuth from '../../components/social-auth';
@@ -30,7 +31,7 @@ const LoginSchema = z.object({
 });
 
 const SignIn = () => {
-  const { user ,setCredentials} = useStore((state) => state);
+  const { setCredentials } = useStore();
   const {
     register,
     handleSubmit,
@@ -41,34 +42,27 @@ const SignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    user && navigate('/');
-  }, [user]);
+
 
   const onSubmit = async (data) => {
     try {
       setLoading(true);
       const { data: res } = await api.post("/auth/sign-in", data);
 
-      // ✅ FIX: Check res?.data?.user instead of res?.user
-      if (res?.data?.user && res?.data?.token) {
-        // ✅ FIX: Save token separately
-        localStorage.setItem('token', res.data.token);
+      // 
+      if (res?.data) {
 
-        // ✅ Save user to localStorage
-        localStorage.setItem('user', JSON.stringify(res.data.user));
+        // Save both user and token
+        const { user, token } = res.data;
+        setCredentials(user, token);
 
-        // ✅ FIX: Import and use setAuthToken to set token in axios headers
-        setAuthToken(res.data.token);
-
-        // ✅ Update store
-        setCredentials(res.data.user);
+        // Set token in axios headers
+        setAuthToken(token);
 
         toast.success(res?.message || "Signed in successfully!");
 
-        // ✅ FIX: Redirect to dashboard "/"
         setTimeout(() => {
-          navigate("/");
+          navigate("/overview");
         }, 1500);
       }
     } catch (error) {

@@ -3,11 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 
 
 import * as z from 'zod';
+
 import useStore from '../../store';
+import { setAuthToken } from '../../libs/apiCall';
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BiLoader } from 'react-icons/bi';
-import { setAuthToken } from '../../libs/apiCall';
+
 
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
@@ -28,7 +31,7 @@ const RegisterSchema = z.object({
     .min(3, "Name must be at least 3 characters"),
   password: z
     .string({ required_error: 'Password is required' })
-    .min(8,"Password must be 8 characters"),
+    .min(8, "Password must be 8 characters"),
 });
 
 const SignUp = () => {
@@ -36,7 +39,7 @@ const SignUp = () => {
   const {
     register,
     handleSubmit,
-    formState:{ errors},
+    formState: { errors },
     reset,
   } = useForm({
     resolver: zodResolver(RegisterSchema),
@@ -44,37 +47,20 @@ const SignUp = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    user && navigate('/');
-  }, [user]);
+
 
   const onSubmit = async (data) => {
     try {
       setLoading(true);
       const { data: res } = await api.post("/auth/sign-up", data);
 
-      if (res?.data?.user && res?.data?.token) {
-        // ✅ Save token to localStorage
-        localStorage.setItem('token', res.data.token);
+      if (res?.data) {
+        const { user, token } = res.data;
+        setCredentials(user, token);
+        setAuthToken(token);
 
-        // ✅ Save user to localStorage  
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-
-        // ✅ Update Zustand store with the same data
-        setCredentials(res.data.user);
-
-        // ✅ Set token in API headers
-        setAuthToken(res.data.token);
-
-        // ✅ Reset form
-        reset();
-
-        toast.success("Account created successfully!");
-
-        // ✅ Redirect to dashboard
-        setTimeout(() => {
-          navigate("/");
-        }, 1000);
+        toast.success('Account created!');
+        navigate('/overview');
       }
     } catch (error) {
       console.log(error);
@@ -98,7 +84,7 @@ const SignUp = () => {
               <div className='mb-8 space-y-6'>
                 <SocialAuth isLoading={loading} setLoading={setLoading} />
                 {/* <p className='dark:text-green-700 pl-10'>Socail Auth Login like Google</p> */}
-                <Separator/>
+                <Separator />
 
                 <Input
                   disabled={loading}
@@ -155,11 +141,11 @@ const SignUp = () => {
         </div>
 
         <CardFooter className="justify-center gap-2">
-        <p className='text-sm text-gray-600'>Already have an account?</p>
+          <p className='text-sm text-gray-600'>Already have an account?</p>
           <Link
             to="/sign-in"
             className="text-sm font-semibold text-violet-600 hover:underline"
-            >
+          >
             Sign in
           </Link>
         </CardFooter>
