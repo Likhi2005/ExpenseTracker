@@ -21,10 +21,10 @@ const Transactions = () => {
   const [selected, setSelected] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState([]);
-
   const [search, setSearch] = useState("");
-  const startDate = searchParams.get("df") || "";
-  const endDate = searchParams.get("dt") || "";
+
+  const startDate = searchParams.get("startDate") || "";
+  const endDate = searchParams.get("endDate") || "";
 
   const handleViewTransaction = (el) => {
     setSelected(el);
@@ -33,18 +33,36 @@ const Transactions = () => {
 
   const fetchTransactions = async () => {
     try {
-      const URL = `/transaction?df=${startDate}&dt=${endDate}&s=${search}`;
+      setIsLoading(true);
+      let URL = `/transactions`;
+
+      // If date range is provided, use the date-range filter
+      if (startDate && endDate) {
+        URL = `/transactions/filter/date-range?startDate=${startDate}&endDate=${endDate}`;
+      }
+
       const { data: res } = await api.get(URL);
 
-      setData(res?.data);
+      // Filter by search term locally
+      let filteredData = res?.data || [];
+      if (search) {
+        filteredData = filteredData.filter(
+          (item) =>
+            item?.description?.toLowerCase().includes(search.toLowerCase()) ||
+            item?.category?.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      setData(filteredData);
     } catch (error) {
       console.error(error);
       toast.error(
-        error?.response?.data?.message || "Something unexpected happened. Try again later."
+        error?.response?.data?.message || "Failed to fetch transactions"
       );
 
-      if (error?.response?.data?.status === "auth_failed") {
+      if (error?.response?.status === 401) {
         localStorage.removeItem("user");
+        localStorage.removeItem("token");
         window.location.reload();
       }
     } finally {
@@ -54,62 +72,56 @@ const Transactions = () => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-
     setSearchParams({
-      df: startDate,
-      dt: endDate,
+      startDate: startDate,
+      endDate: endDate,
     });
-
-    setIsLoading(true);
     await fetchTransactions();
   };
 
   useEffect(() => {
-    setIsLoading(true);
     fetchTransactions();
   }, [startDate, endDate]);
 
   if (isLoading) return <Loading />;
 
-  return <>
+  return (
     <div className='w-full py-10'>
       <div className='flex flex-col md:flex-row md:items-center justify-between mb-10'>
         <Title title='Transactions Activity' />
 
-
         <div className='flex flex-col md:flex-row md:items-center gap-4'>
           <DateRange />
 
-          <form onSubmit={(e) => handleSearch(e)}>
+          <form onSubmit={handleSearch}>
             <div className='w-full flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-2'>
               <IoSearchOutline className='text-xl text-gray-600 dark:text-gray-500' />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 type='text'
-                placeholder='Search now...'
-                className='outline-none group bg-transparent text-gray-700 dark:text-gray-400 placeholder:text-gray-600'
+                placeholder='Search by description or category...'
+                className='outline-none bg-transparent text-gray-700 dark:text-gray-400 placeholder:text-gray-600 dark:placeholder:text-gray-500 w-full'
               />
             </div>
           </form>
 
           <button
             onClick={() => setIsOpen(true)}
-            className='py-1.5 px-2 rounded text-white bg-black dark:bg-violet-800 flex items-center justify-center gap-2'
+            className='py-1.5 px-2 rounded text-white bg-black dark:bg-violet-800 hover:bg-gray-900 dark:hover:bg-violet-700 flex items-center justify-center gap-2 transition-colors'
           >
             <MdAdd size={22} />
-            <span>Pay</span>
+            <span>Add</span>
           </button>
 
           <button
             onClick={() =>
               exportToExcel(data, `Transactions ${startDate}-${endDate}`)
             }
-            className='flex items-center gap-2 text-black dark:text-gray-300'
+            className='flex items-center gap-2 text-black dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100'
           >
             Export <CiExport size={24} />
           </button>
-
         </div>
       </div>
 
@@ -119,100 +131,107 @@ const Transactions = () => {
             <span>No Transaction History</span>
           </div>
         ) : (
-          <>
-            <table className='w-full'>
-              <thead className='w-full border-b border-gray-300 dark:border-gray-700'>
-                <tr className='w-full text-black dark:text-gray-400 text-left'>
-                  <th className='py-2 px-2'>Date</th>
-                  <th className='py-2 px-2'>Description</th>
-                  <th className='py-2 px-2'>Status</th>
-                  <th className='py-2 px-2'>Source</th>
-                  <th className='py-2 px-2'>Amount</th>
-                  {/* <th className='py-2 px-2'>Actions</th> */}
-                </tr>
-              </thead>
-              <tbody>
-                {data?.map((item, index) => (
-                  <tr key={index} className='w-full border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-500'>
-                    {/* Date */}
-                    <td className='py-4'>
-                      <p className='w-24 md:w-auto'>
-                        {new Date(item?.createdat).toDateString()}
+          <table className='w-full'>
+            <thead className='w-full border-b border-gray-300 dark:border-gray-700'>
+              <tr className='w-full text-black dark:text-gray-400 text-left text-sm'>
+                <th className='py-2 px-2'>Date</th>
+                <th className='py-2 px-2'>Description</th>
+                <th className='py-2 px-2'>Category</th>
+                <th className='py-2 px-2'>Type</th>
+                <th className='py-2 px-2'>Amount</th>
+                <th className='py-2 px-2'>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data?.map((item, index) => (
+                <tr
+                  key={item?.id || index}
+                  className='w-full border-b border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                >
+                  {/* Date */}
+                  <td className='py-4 px-2'>
+                    <p className='w-24 md:w-auto text-sm'>
+                      {item?.transaction_date
+                        ? new Date(item.transaction_date).toDateString()
+                        : 'N/A'}
+                    </p>
+                  </td>
+
+                  {/* Description */}
+                  <td className='py-4 px-2'>
+                    <div className='flex flex-col w-56 md:w-auto'>
+                      <p className='text-base text-black dark:text-gray-400 line-clamp-2'>
+                        {item?.description || 'N/A'}
                       </p>
-                    </td>
+                    </div>
+                  </td>
 
-                    {/* Description */}
-                    <td className='py-4 px-2'>
-                      <div className='flex flex-col w-56 md:w-auto'>
-                        <p className='text-base 2xl:text-lg text-black dark:text-gray-400 line-clamp-2'>
-                          {item.description}
-                        </p>
-                      </div>
-                    </td>
+                  {/* Category */}
+                  <td className='py-4 px-2'>
+                    <span className='inline-block bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-xs font-medium text-gray-900 dark:text-gray-300'>
+                      {item?.category || 'Uncategorized'}
+                    </span>
+                  </td>
 
-                    {/* Status */}
-                    <td className='py-4 px-2'>
-                      <div className='flex items-center gap-2'>
-                        {item.status === "Pending" && (
-                          <RiProgress3Line className='text-amber-600' size={24} />
-                        )}
-                        {item.status === "Completed" && (
-                          <IoCheckmarkDoneCircle className='text-emerald-600' size={24} />
-                        )}
-                        {item.status === "Rejected" && (
-                          <TiWarning className='text-red-600' size={24} />
-                        )}
-                        <span>{item?.status}</span>
-                      </div>
-                    </td>
+                  {/* Type */}
+                  <td className='py-4 px-2'>
+                    <span
+                      className={`inline-block px-2 py-1 rounded text-xs font-semibold ${item?.transaction_type === 'income'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : item?.transaction_type === 'expense'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                        }`}
+                    >
+                      {item?.transaction_type
+                        ? item.transaction_type.toUpperCase()
+                        : 'UNKNOWN'}
+                    </span>
+                  </td>
 
-                    {/* Source */}
-                    <td className='py-4 px-2'>{item?.source}</td>
+                  {/* Amount */}
+                  <td className='py-4 px-2 text-black dark:text-gray-400 text-base font-medium'>
+                    <span
+                      className={`font-bold ${item?.transaction_type === 'income'
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                        }`}
+                    >
+                      {item?.transaction_type === 'income' ? '+' : '-'}
+                    </span>
+                    {formatCurrency(item?.amount)}
+                  </td>
 
-                    {/* Amount */}
-                    <td className='py-4 text-black dark:text-gray-400 text-base font-medium'>
-                      <span
-                        className={`${item?.type === "income"
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                          } text-lg font-bold ml-1`}
-                      >
-                        {item?.type === "income" ? "+" : "-"}
-                      </span>
-                      {formatCurrency(item?.amount)}
-                    </td>
-
-                    {/* View Button */}
-                    <td className='py-4 px-2'>
-                      <button
-                        onClick={() => handleViewTransaction(item)}
-                        className='outline-none text-violet-600 hover:underline'
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
+                  {/* View Button */}
+                  <td className='py-4 px-2'>
+                    <button
+                      onClick={() => handleViewTransaction(item)}
+                      className='outline-none text-violet-600 dark:text-violet-400 hover:underline text-sm'
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
+
+      <AddTransaction
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        refetch={fetchTransactions}
+        key={new Date().getTime()}
+      />
+
+      <ViewTransaction
+        data={selected}
+        isOpen={isOpenView}
+        setIsOpen={setIsOpenView}
+      />
     </div>
-
-    <AddTransaction
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      refetch={fetchTransactions}
-      key={new Date().getTime()}
-    />
-
-    <ViewTransaction
-      data={selected}
-      isOpen={isOpenView}
-      setIsOpen={setIsOpenView}
-    />
-  </>;
+  );
 };
 
 export default Transactions;
