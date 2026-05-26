@@ -14,6 +14,19 @@ const app = express();
 // ===== LOGGING =====
 app.use(morgan('dev'));
 
+// ===== CORS =====
+app.use(
+    cors({
+        origin:
+            config.nodeEnv === "production"
+                ? config.frontend.url
+                : ['http://localhost:5173'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+    })
+);
+
 // ===== SECURITY MIDDLEWARE =====
 app.use(helmet());
 
@@ -27,19 +40,6 @@ const limiter = rateLimit({
     }
 });
 app.use(limiter);
-
-// ===== CORS =====
-app.use(
-    cors({
-        origin:
-            config.nodeEnv === "production"
-                ? config.frontend.url
-                : ['http://localhost:5173'],
-            credentials: true,
-            methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-            allowedHeaders: ['Content-Type', 'Authorization'],
-    })
-);
 
 // ===== BODY PARSER =====
 app.use(express.json({ limit: '10mb' }));

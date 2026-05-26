@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 
-dotenv.config()
+// Load .env.test in test mode, otherwise .env
+const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+dotenv.config({ path: envFile });
 
 export const config = {
     // Server
@@ -14,6 +16,8 @@ export const config = {
         database: process.env.PG_DB,
         password: process.env.PG_PASSWORD,
         port: process.env.PG_PORT,
+        sslMode: process.env.PG_SSL_MODE || 'disable',
+        sslCert: process.env.PG_SSL_CERT,
     },
 
     // JWT
@@ -39,9 +43,19 @@ export const config = {
 };
 
 // Validate required env vars
-const requiredEnvs = ["JWT_SECRET", "PG_USER", "PG_PASSWORD", "PG_DB", "PG_HOST", "PG_PORT"];
-const missing = requiredEnvs.filter((env) => !process.env[env]);
+// const requiredEnvs = ["JWT_SECRET", "PG_USER", "PG_PASSWORD", "PG_DB", "PG_HOST", "PG_PORT"];
+// const missing = requiredEnvs.filter((env) => !process.env[env]);
 
-if (missing.length) {
-    throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+// if (missing.length) {
+//     throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+// }
+
+// Validate required env vars (skip in test)
+if (process.env.NODE_ENV !== 'test') {
+    const requiredEnvs = ["JWT_SECRET", "PG_USER", "PG_PASSWORD", "PG_DB", "PG_HOST", "PG_PORT"];
+    const missing = requiredEnvs.filter((env) => !process.env[env]);
+
+    if (missing.length) {
+        throw new Error(`Missing environment variables: ${missing.join(", ")}`);
+    }
 }
