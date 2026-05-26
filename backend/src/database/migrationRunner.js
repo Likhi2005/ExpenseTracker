@@ -7,6 +7,9 @@ const migrationsDir = path.join(process.cwd(), 'src', 'database', 'migrations');
 
 export const runMigrations = async () => {
     try{
+
+        await pool.query('SELECT 1'); // 🔥 test connection first
+        
         // Create migration tracking table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS migrations (
