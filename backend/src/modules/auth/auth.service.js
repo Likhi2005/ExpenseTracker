@@ -8,7 +8,7 @@ export const authService = {
         // Check if user already exists
         const existingUser = await authRepository.findByEmail(email);
         if (existingUser) {
-            throw new ValidationError("Email already in use");
+            throw new ValidationError("Email already exists");
         }
 
         // Hash password
@@ -18,7 +18,7 @@ export const authService = {
         const user = await authRepository.create(name, email, hashedPassword);
 
         // Generate token
-        const token = createJWT({ userId: user.id });
+        const token = createJWT(user.id);
 
         return {
             user: {
@@ -44,7 +44,7 @@ export const authService = {
         }
 
         // Generate token
-        const token = createJWT({ userId: user.id });
+        const token = createJWT(user.id);
 
         return {
             user: {
