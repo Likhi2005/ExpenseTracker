@@ -15,9 +15,15 @@ import Navbar from './components/navbar';
 import { useEffect } from 'react';
 
 const RootLayout = () => {
-  const {user} = useStore((state)=>state);
-  console.log(user);
-  setAuthToken(user?.token || "");
+  const {user, token } = useStore((state)=>state);
+
+  // Initialize auth token on app load
+  useEffect(() => {
+    if (token) {
+      setAuthToken(token);
+    }
+  }, [token]);
+
   return !user?(
     <Navigate to={"/sign-in"} replace={true}/>
   ):(
