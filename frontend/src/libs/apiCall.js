@@ -8,16 +8,43 @@ const api = axios.create({
     baseURL: API_URL,
 });
 
-// Function to set or remove the Authorization token in the headers
+// Load token immediately on app start
+const token = localStorage.getItem("token");
+
+if (token) {
+    api.defaults.headers.common["Authorization"] =
+        `Bearer ${token}`;
+}
+
+
+// Function to set/remove token dynamically
 export function setAuthToken(token) {
     if (token) {
-        // Set the Authorization header if a token is provided
-        api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        api.defaults.headers.common["Authorization"] =
+            `Bearer ${token}`;
+
+        localStorage.setItem("token", token);
     } else {
-        // Remove the Authorization header if no token is provided
         delete api.defaults.headers.common["Authorization"];
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
     }
 }
+
+// Handle 401 globally
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            setAuthToken(null);
+
+            window.location.href = "/sign-in";
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 // Export the axios instance
 export default api;
