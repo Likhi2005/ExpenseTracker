@@ -37,12 +37,12 @@ export const accountsRepository = {
     },
 
     // Create a new account for  a user
-    async createAccount(userId, accountName, accountType, initialBalance = 0) {
+    async createAccount(userId, account_name, account_type, initialBalance = 0) {
         const result = await pool.query(
-            `INSERT INTO accounts (user_id,account_name, accountType, balance)
+            `INSERT INTO accounts (user_id,account_name, account_type, balance)
             VALUES($1, $2, $3, $4)
-            RETURNING id, user_id, account_name, accountType, balance`,
-            [userId, accountName, accountType, initialBalance]
+            RETURNING id, user_id, account_name, account_type, balance`,
+            [userId, account_name, account_type, initialBalance]
         );
         return result.rows[0];
     },
@@ -52,7 +52,7 @@ export const accountsRepository = {
         const result = await pool.query(
             `UPDATE accounts set balance = $1, updated_at = CURRENT_TIMESTAMP 
             WHERE id = $2 
-            RETURNING id, user_id, account_name, accountType, balance, is_active, created_at, updated_at`,
+            RETURNING id, user_id, account_name, account_type, balance, is_active, created_at, updated_at`,
             [newBalance, accountId]
         );
         return result.rows[0];
