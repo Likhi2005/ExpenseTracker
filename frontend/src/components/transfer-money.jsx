@@ -69,7 +69,7 @@ const TransferMoney = ({ isOpen, setIsOpen, refetch }) => {
 
     const fetchAccounts = async () => {
         try {
-            const { data: res } = await api.get(`/account`);
+            const { data: res } = await api.get(`/accounts`);
 
             setAccountData(res?.accounts);
         } catch (error) {

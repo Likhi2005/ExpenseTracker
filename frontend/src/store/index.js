@@ -1,12 +1,27 @@
-import {create} from 'zustand';
+import { create } from 'zustand';
 
 const useStore = create((set)=>({
-    theme:localStorage.getItem("theme")?? "light",
-    user: JSON.parse(localStorage.getItem("user"))?? null,
+
+    theme: localStorage.getItem("theme") ?? "light",
+    user: JSON.parse(localStorage.getItem("user")) ?? null,
+    token: localStorage.getItem('token') ?? null,
 
     setTheme: (value)=>set({theme:value}),
-    setCredentials: (user)=>set({user}),
-    signOut:()=>set({user:null}),
+
+
+    setCredentials: (user, token) => {
+        // Save both user and token to localStorage
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('token', token);
+        set({ user, token });
+    },
+
+    signOut: () => {
+        // Clear both user and token from localStorage
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        set({ user: null, token: null });
+    },
 }));
 
 export default useStore;

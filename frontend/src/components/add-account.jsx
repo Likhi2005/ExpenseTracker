@@ -9,7 +9,17 @@ import { BiLoader } from "react-icons/bi";
 import api from "../libs/apiCall";
 import { toast } from "sonner";
 
-const accounts = ["Cash", "SBI", "Paypal", "Visa Debit Card"];
+
+// Map display names to valid account types
+const ACCOUNT_TYPES = {
+    "Savings Account": "savings",
+    "Checking Account": "checking",
+    "Credit Card": "credit",
+    "Cash": "cash",
+    "Investment": "investment",
+};
+
+const accountOptions = Object.keys(ACCOUNT_TYPES);
 
 export const AddAccount = ({
     isOpen, setIsOpen, refetch
@@ -18,29 +28,50 @@ export const AddAccount = ({
     const {
         register,
         handleSubmit,
+        reset,
         formState: { errors },
     } = useForm({
-        defaultValues: { account_number: generateAccountNumber() },
+        defaultValues: {
+            account_number: generateAccountNumber(),
+            initial_balance: 0,
+        },
     });
 
-    const [selectedAccount, setSelectedAccount] = useState(accounts[0]);
+    const [selectedAccount, setSelectedAccount] = useState(accountOptions[0]);
     const [loading, setLoading] = useState(false);
 
 
     const onSubmit = async (data) => {
         try {
             setLoading(true);
-            const newData={...data,name:selectedAccount};
-            const {data:res} = await api.post(`/account/create`,newData);
-            if(res?.data){
+
+            // Get the valid account type from the mapping
+            const accountType = ACCOUNT_TYPES[selectedAccount];
+
+            const payload = {
+                account_name: data.account_name,
+                account_type: accountType,
+                initial_balance: parseFloat(data.initial_balance) || 0,
+            };
+
+            console.log("Sending payload", payload);
+
+            const { data: res } = await api.post('/accounts', payload);
+
+            if (res?.data) {
                 toast.success(res?.message);
                 setIsOpen(false);
+                reset()
                 refetch();
             }
         } catch (error) {
-            console.error("Something went wrong:",error);
+            console.error("Error details:", {
+                status: error?.response?.status,
+                message: error?.response?.data?.message,
+                error: error?.response?.data,
+            });
             toast.error(error?.response?.data?.message || error.message);
-        }finally{
+        } finally {
             setLoading(false);
         }
     };
@@ -63,77 +94,96 @@ export const AddAccount = ({
                 </DialogTitle>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Account Type Selection */}
                     <div className="flex flex-col gap-1 mb-2">
-                        <p className="text-gray-700 dark:text-gray-400 text-sm mb-2">
-                            Select Account
-                        </p>
+                        <label className="text-gray-700 dark:text-gray-400 text-sm mb-2">
+                            Account Type
+                        </label>
                         <select
+                            value={selectedAccount}
                             onChange={(e) => setSelectedAccount(e.target.value)}
-                            className="bg-transparent appearance-none border border-gray-300 dark:border-gray-800 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-500 outline-none focus:ring-1 ring-blue-500 dark:placeholder:text-gray-700"
+                            className="bg-transparent appearance-none border border-gray-300 dark:border-gray-800 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-500 outline-none focus:ring-1 ring-blue-500"
                         >
-                            {accounts.map((acc, index) => (
+                            {accountOptions.map((acc) => (
                                 <option
-                                    key={index}
+                                    key={acc}
                                     value={acc}
-                                    className="w-full flex items-center justify-center dark:bg-slate-900"
+                                    className="dark:bg-slate-900"
                                 >
                                     {acc}
                                 </option>
                             ))}
                         </select>
                     </div>
+                    {/* Account Name Input */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-gray-700 dark:text-gray-400 text-sm">
+                            Account Name
+                        </label>
+                        <Input
+                            type="text"
+                            placeholder="e.g. My Savings Account"
+                            {...register("account_name", {
+                                required: "Account Name is required!",
+                                minLength: {
+                                    value: 1,
+                                    message: "Account Name must be at least 1 character",
+                                }
+                            })}
+                            className='border border-gray-300 dark:border-gray-800 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-400 outline-none focus:ring-1 ring-blue-500'
+                        />
 
-                    {user?.accounts?.includes(selectedAccount) && (
-                        <div className="flex items-center gap-2 bg-yellow-400 text-black p-2 mt-6 rounded">
-                            <MdOutlineWarning size={30} />
-                            <span className="text-sm">
-                                This account has already been activated.Try another one.Thank you.
+                    </div>
+
+                    {/* Initial Balance Input */}
+                    <div className="flex flex-col gap-1">
+                        <label className="text-gray-700 dark:text-gray-400 text-sm">
+                            Initial Balance
+                        </label>
+                        <Input
+                            type="number"
+                            placeholder="0.00"
+                            step="0.01"
+                            {...register("initial_balance", {
+                                min: {
+                                    value: 0,
+                                    message: "Balance cannot be negative"
+                                }
+                            })}
+                            className="border border-gray-300 dark:border-gray-800 rounded w-full py-2 px-3 text-gray-700 dark:text-gray-400 outline-none focus:ring-1 ring-blue-500"
+                        />
+                        {errors.initial_balance && (
+                            <span className="text-red-500 text-sm">
+                                {errors.initial_balance.message}
                             </span>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
-
-                    {!user?.accounts?.includes(selectedAccount) && (
-                        <>
-                            <Input
-                                name="account_number"
-                                label="Account Number"
-                                placeholder="3876290766219"
-                                {...register("account_number", {
-                                    required: "Account Number is required!"
-                                })}
-                                error={
-                                    errors.account_number ? errors.account_number.message : ""
-                                }
-                                className='inputStyle'
-                            />
-
-                            <Input
-                                type="number"
-                                name="amount"
-                                label="Initial Amount"
-                                placeholder="10.56"
-                                {...register("amount", {
-                                    required: "Initial Amount is required!"
-                                })}
-                                error={
-                                    errors.amount ? errors.amonut.message : ""
-                                }
-                                className='inputStyle'
-                            />
-
-                            <Button
-                                disabled={loading}
-                                type="submit"
-                                className="bg-violet-700 text-white w-full mt-4 p-2 rounded"
-                            >
-                                {loading ? (<BiLoader className="text-xl animate-spin text-white" />) : ("Create account")}
-                            </Button>
-
-                        </>
-                    )}
+                    {/* Submit Button */}
+                    <div className="flex gap-3 mt-6">
+                        <Button
+                            onClick={closeModal}
+                            className="flex-1 inline-flex justify-center items-center rounded-md bg-gray-200 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 inline-flex justify-center items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                        >
+                            {loading ? (
+                                <>
+                                    <BiLoader className="animate-spin mr-2" />
+                                    Creating...
+                                </>
+                            ) : (
+                                'Create Account'
+                            )}
+                        </Button>
+                    </div>
                 </form>
             </DialogPanel>
         </DialogWrapper>
-    )
-}
+    );
+};

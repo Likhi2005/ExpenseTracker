@@ -174,3 +174,13 @@ playwright/.cache/
 
 # Local development
 .local/
+
+# Shell scripts
+*.sh
+
+# Certificates and Environment Files
+certs/
+.env
+.env.local
+node_modules/
+logs/

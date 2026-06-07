@@ -20,8 +20,13 @@ const AddMoney = ({ isOpen, setIsOpen, id, refetch }) => {
 
     const submitHandler = async (data) => {
         try {
+
+            const payload = {
+                amount: parseFloat(data.amount),
+            }
             setLoading(true);
-            const { data: res } = await api.put(`/account/add-money/${id}`, data);
+            const { data: res } = await api.put(`/accounts/${id}/add-money`, payload);
+            
 
             if (res?.data) {
                 toast.success(res?.message);

@@ -3,11 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 
 
 import * as z from 'zod';
+
 import useStore from '../../store';
+import { setAuthToken } from '../../libs/apiCall';
+
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BiLoader } from 'react-icons/bi';
-
 
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
 import SocialAuth from '../../components/social-auth';
@@ -29,7 +31,7 @@ const LoginSchema = z.object({
 });
 
 const SignIn = () => {
-  const { user ,setCredentials} = useStore((state) => state);
+  const { setCredentials } = useStore();
   const {
     register,
     handleSubmit,
@@ -40,21 +42,25 @@ const SignIn = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    user && navigate('/');
-  }, [user]);
+
 
   const onSubmit = async (data) => {
     try {
-      console.log(data);
       setLoading(true);
       const { data: res } = await api.post("/auth/sign-in", data);
-      if (res?.user) {
-        toast.success(res?.message);
 
-        const userInfo = {...res?.user,token:res.token};
-        localStorage.setItem("user",JSON.stringify(userInfo));
-        setCredentials(userInfo);
+      // 
+      if (res?.data) {
+
+        // Save both user and token
+        const { user, token } = res.data;
+        setCredentials(user, token);
+
+        // Set token in axios headers
+        setAuthToken(token);
+
+        toast.success(res?.message || "Signed in successfully!");
+
         setTimeout(() => {
           navigate("/overview");
         }, 1500);
