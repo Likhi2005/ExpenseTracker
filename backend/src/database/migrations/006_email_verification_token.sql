@@ -18,6 +18,10 @@ CREATE TABLE IF NOT EXISTS email_verification_token (
 
 );
 
+ALTER TABLE email_verification_token
+ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+
 -- Create index for cleanup queries
 CREATE INDEX IF NOT EXISTS idx_token_hash ON email_verification_token(token_hash);
 CREATE INDEX IF NOT EXISTS idx_user_id ON email_verification_token(user_id);

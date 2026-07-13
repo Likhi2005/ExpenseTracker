@@ -22,6 +22,6 @@ export const isTokenExpired = (expiredAt) => {
     return new Date() > new Date(expiredAt);
 }
 
-export const calculateExpiryToken = (hours=24) => {
+export const calculateTokenExpiry = (hours=24) => {
     return new Date(Date.now() + hours * 60 * 60 * 1000);
 }

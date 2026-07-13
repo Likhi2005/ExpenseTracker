@@ -29,7 +29,7 @@ export const config = {
     // EMail Service (Resend)
     email: {
         apiKey: process.env.EMAIL_CONFIG_API_KEY,
-        from: process.env.EMAIL_FROM || 'noreply@expensetracker.com',
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
         fromName: process.env.FROM_NAME || 'ExpenseTracker',
     },
 
