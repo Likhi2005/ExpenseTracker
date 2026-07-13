@@ -1,6 +1,7 @@
 import { transactionsService } from '../modules/transactions/transactions.service.js';
 import { transactionsRepository } from '../modules/transactions/transactions.repository.js';
 import { ValidationError, AuthenticationError } from '../utils/errors.js';
+import jest from 'jest-mock';
 
 jest.mock('../modules/transactions/transactions.repository.js');
 

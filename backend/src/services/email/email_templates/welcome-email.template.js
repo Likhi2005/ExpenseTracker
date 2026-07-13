@@ -1,4 +1,4 @@
-const emailWelcomeTemplate = (email, name) => `
+export const emailWelcomeTemplate = (email, name) => `
 <!DOCTYPE html>
         <html>
             <head>

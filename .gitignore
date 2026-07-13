@@ -183,4 +183,9 @@ certs/
 .env
 .env.local
 node_modules/
+backend/node_modules/
 logs/
+
+# Documentation
+advance_login.md
+task.md

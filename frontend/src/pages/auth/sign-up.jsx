@@ -55,12 +55,12 @@ const SignUp = () => {
       const { data: res } = await api.post("/auth/sign-up", data);
 
       if (res?.data) {
-        const { user, token } = res.data;
-        setCredentials(user, token);
-        setAuthToken(token);
+        // Store the email in localStorage to use it in the verify email page
+        localStorage.setItem('pendingEmail', data.email);
 
-        toast.success('Account created!');
-        navigate('/overview');
+        toast.success('Account created! Check your email to verify.');
+        // navigate to verify email page
+        navigate('/verify-email');
       }
     } catch (error) {
       console.log(error);

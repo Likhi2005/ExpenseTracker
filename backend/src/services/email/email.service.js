@@ -2,18 +2,18 @@ import resend from "./providers/resend.provider.js";
 import { config } from '../../config/index.js';
 import { logger } from '../../utils/logger.js';
 
-import emailVerificationTemplate from './email_templates/verification-email.template.js';
-import emailWelcomeTemplate from './email_templates/welcome-email.template.js';
+import { emailVerificationTemplate } from './email_templates/verification-email.template.js';
+import { emailWelcomeTemplate } from './email_templates/welcome-email.template.js';
 
-export const sendVerificationEmail = async (email, name, verificationToken) => {
-    const verificationLink = `${config.frontend.url}/auth/verify-email?token=${verificationToken}`;
+export const sendVerificationEmail = async (email, name, verificationToken, userId) => {
+    const verificationLink = `${config.frontend.url}/email-verified?token=${verificationToken}&userId=${userId}`;
 
     try {
         const response = await resend.emails.send({
             from: `${config.email.fromName} <${config.email.from}>`,
             to: email,
             subject: 'Verify your ExpenseTracker Email Address',
-            html: emailVerificationTemplate(name, verificationLink),
+            html: emailVerificationTemplate(name, verificationLink, config),
         });
 
         if (response.error) {
@@ -27,7 +27,8 @@ export const sendVerificationEmail = async (email, name, verificationToken) => {
             messageId: response.id
         }
     } catch (error) {
-        logger.error('Email sending failed:', error);
+        console.error(error.stack);
+        logger.error('Email sending failed:', error.mesage);
         throw error;
     }
 };

@@ -26,9 +26,22 @@ export const config = {
         expiresIn: "1h",
     },
 
+    // EMail Service (Resend)
+    email: {
+        apiKey: process.env.EMAIL_CONFIG_API_KEY,
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        fromName: process.env.FROM_NAME || 'ExpenseTracker',
+    },
+
     // Frontend
     frontend: {
         url: process.env.FRONTEND_URL || "http://localhost:5173",
+    },
+
+    // Email Verification
+    emailVerification: {
+        expiryHours: parseInt(process.env.EMAIL_VERIFICATION_TOKEN_HOURS || '24'),
+        tokenLength: parseInt(process.env.EMAIL_VERIFICATION_TOKEN_LENGTH || '32'),
     },
 
     // Firebase (optional)
