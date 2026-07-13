@@ -4,6 +4,8 @@ import {Navigate,Outlet,Route,Routes} from 'react-router-dom';
 
 import SignIn from './pages/auth/sign-in';
 import SignUp from './pages/auth/sign-up';
+import VerifyEmail from './pages/auth/verify-email';
+import EmailVerified from './pages/auth/email-verified';
 import Settings from './pages/settings';
 import Dashboard from './pages/dashboard';
 import Transactions from './pages/transactions';
@@ -60,6 +62,8 @@ function App() {
           </Route>
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/email-verified" element={<EmailVerified />} />
         </Routes>
         </div>
 
